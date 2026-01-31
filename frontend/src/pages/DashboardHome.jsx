@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import KpiCard from '../components/KpiCard'
 import { dashboardService } from '../services/dashboardService'
+import { FileText, X } from 'lucide-react'
 
 export default function DashboardHome() {
   const [stats, setStats] = useState({
@@ -14,6 +15,8 @@ export default function DashboardHome() {
     customers: 0,
   })
   const [loading, setLoading] = useState(true)
+  const [showReportsModal, setShowReportsModal] = useState(false)
+  const [revenuePeriod, setRevenuePeriod] = useState('Monthly')
 
   useEffect(() => {
     fetchDashboardData()
@@ -69,7 +72,11 @@ export default function DashboardHome() {
             Here's your complete business overview for today
           </p>
         </div>
-        <button className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full text-sm font-medium hover:shadow-lg transition-shadow">
+        <button
+          onClick={() => setShowReportsModal(true)}
+          className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full text-sm font-medium hover:shadow-lg transition-shadow flex items-center gap-2"
+        >
+          <FileText className="w-4 h-4" />
           View Reports
         </button>
       </div>
@@ -155,9 +162,24 @@ export default function DashboardHome() {
               <p className="text-xs text-gray-500">7-month performance overview</p>
             </div>
             <div className="flex gap-1 bg-gray-100 rounded-full p-1">
-              <button className="px-3 py-1 text-xs rounded-full bg-white shadow-sm">Monthly</button>
-              <button className="px-3 py-1 text-xs rounded-full text-gray-600">Weekly</button>
-              <button className="px-3 py-1 text-xs rounded-full text-gray-600">Daily</button>
+              <button 
+                onClick={() => setRevenuePeriod('Monthly')}
+                className={`px-3 py-1 text-xs rounded-full transition-colors ${revenuePeriod === 'Monthly' ? 'bg-white shadow-sm' : 'text-gray-600 hover:bg-gray-200'}`}
+              >
+                Monthly
+              </button>
+              <button 
+                onClick={() => setRevenuePeriod('Weekly')}
+                className={`px-3 py-1 text-xs rounded-full transition-colors ${revenuePeriod === 'Weekly' ? 'bg-white shadow-sm' : 'text-gray-600 hover:bg-gray-200'}`}
+              >
+                Weekly
+              </button>
+              <button 
+                onClick={() => setRevenuePeriod('Daily')}
+                className={`px-3 py-1 text-xs rounded-full transition-colors ${revenuePeriod === 'Daily' ? 'bg-white shadow-sm' : 'text-gray-600 hover:bg-gray-200'}`}
+              >
+                Daily
+              </button>
             </div>
           </div>
           <div className="h-48 bg-gradient-to-t from-green-50 to-transparent rounded-lg flex items-center justify-center text-gray-400 text-sm">
@@ -175,6 +197,89 @@ export default function DashboardHome() {
           </div>
         </div>
       </div>
+
+      {/* Reports Modal */}
+      {showReportsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Business Reports</h2>
+                <p className="text-sm text-gray-600 mt-1">Comprehensive analytics and insights</p>
+              </div>
+              <button
+                onClick={() => setShowReportsModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Report Categories */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border border-gray-200 rounded-lg p-4 hover:border-green-500 transition-colors cursor-pointer">
+                  <h3 className="font-semibold text-gray-900 mb-2">Sales Report</h3>
+                  <p className="text-sm text-gray-600">Revenue, orders, and sales trends</p>
+                </div>
+                <div className="border border-gray-200 rounded-lg p-4 hover:border-green-500 transition-colors cursor-pointer">
+                  <h3 className="font-semibold text-gray-900 mb-2">Inventory Report</h3>
+                  <p className="text-sm text-gray-600">Stock levels and product performance</p>
+                </div>
+                <div className="border border-gray-200 rounded-lg p-4 hover:border-green-500 transition-colors cursor-pointer">
+                  <h3 className="font-semibold text-gray-900 mb-2">Customer Report</h3>
+                  <p className="text-sm text-gray-600">Customer analytics and behavior</p>
+                </div>
+                <div className="border border-gray-200 rounded-lg p-4 hover:border-green-500 transition-colors cursor-pointer">
+                  <h3 className="font-semibold text-gray-900 mb-2">Supplier Report</h3>
+                  <p className="text-sm text-gray-600">Supplier performance and orders</p>
+                </div>
+              </div>
+
+              {/* Quick Stats */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-900 mb-3">Quick Statistics</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <div className="text-xs text-gray-600">Total Revenue</div>
+                    <div className="text-lg font-bold text-gray-900">${stats.totalRevenue.toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-600">Total Orders</div>
+                    <div className="text-lg font-bold text-gray-900">{stats.totalOrders}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-600">Products</div>
+                    <div className="text-lg font-bold text-gray-900">{stats.products}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-600">Customers</div>
+                    <div className="text-lg font-bold text-gray-900">{stats.customers}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Export Options */}
+              <div className="border-t border-gray-200 pt-4">
+                <h3 className="font-semibold text-gray-900 mb-3">Export Reports</h3>
+                <div className="flex gap-3">
+                  <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">
+                    Export as PDF
+                  </button>
+                  <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                    Export as Excel
+                  </button>
+                  <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                    Export as CSV
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

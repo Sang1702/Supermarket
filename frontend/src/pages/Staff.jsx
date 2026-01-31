@@ -13,9 +13,23 @@ export default function Staff() {
 
   const fetchStaffs = async () => {
     try {
-      const data = await staffService.getStaffs()
+      const response = await staffService.getStaffs()
+      console.log('Staff response:', response)
+      
+      // Handle different response formats
+      let staffsData = []
+      if (Array.isArray(response)) {
+        staffsData = response
+      } else if (response?.result && Array.isArray(response.result)) {
+        staffsData = response.result
+      } else if (response?.data && Array.isArray(response.data)) {
+        staffsData = response.data
+      } else if (response?.content && Array.isArray(response.content)) {
+        staffsData = response.content
+      }
+      
       // Map staff data to include user info
-      const staffsWithUserInfo = data.map((staff) => ({
+      const staffsWithUserInfo = (staffsData || []).map((staff) => ({
         id: staff.id,
         name: staff.user?.fullName || 'N/A',
         role: staff.position || 'N/A',
@@ -32,29 +46,38 @@ export default function Staff() {
     }
   }
 
-  const filteredStaff = staffs.filter(
-    (staff) =>
-      staff.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      staff.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      staff.email.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredStaff = (staffs || []).filter((staff) => {
+    if (!staff) return false
+    return (
+      staff.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      staff.role?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      staff.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  })
 
   // Tính toán số lượng theo role
-  const adminCount = staffs.filter(
-    (s) => s.role === 'Management Staff' || s.role?.toLowerCase().includes('management')
+  const adminCount = (staffs || []).filter(
+    (s) => s?.role === 'Management Staff' || s?.role?.toLowerCase().includes('management')
   ).length
-  const warehouseCount = staffs.filter(
-    (s) => s.role === 'Warehouse Staff' || s.role?.toLowerCase().includes('warehouse')
+  const warehouseCount = (staffs || []).filter(
+    (s) => s?.role === 'Warehouse Staff' || s?.role?.toLowerCase().includes('warehouse')
   ).length
-  const salesCount = staffs.filter(
-    (s) => s.role === 'Sales Staff' || s.role?.toLowerCase().includes('sales')
+  const salesCount = (staffs || []).filter(
+    (s) => s?.role === 'Sales Staff' || s?.role?.toLowerCase().includes('sales')
   ).length
-  const deliveryCount = staffs.filter(
-    (s) => s.role === 'Delivery Staff' || s.role?.toLowerCase().includes('delivery')
+  const deliveryCount = (staffs || []).filter(
+    (s) => s?.role === 'Delivery Staff' || s?.role?.toLowerCase().includes('delivery')
   ).length
 
   if (loading) {
-    return <div className="text-center py-12">Loading...</div>
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading staff...</p>
+        </div>
+      </div>
+    )
   }
 
   const getRoleBadge = (role) => {
@@ -94,7 +117,10 @@ export default function Staff() {
             Manage staff members and their roles
           </p>
         </div>
-        <button className="px-4 py-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-medium shadow-md hover:shadow-lg flex items-center gap-2">
+        <button 
+          onClick={() => alert('Add New Staff form - Coming soon!')}
+          className="px-4 py-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-medium shadow-md hover:shadow-lg flex items-center gap-2 transition-shadow"
+        >
           <Plus className="w-4 h-4" />
           Add New Staff
         </button>

@@ -14,24 +14,53 @@ export default function Customers() {
 
   const fetchCustomers = async () => {
     try {
-      const data = await customerService.getCustomers()
+      const response = await customerService.getCustomers()
+      console.log('Customers response:', response)
+      
+      // Handle different response formats
+      let customersData = []
+      if (Array.isArray(response)) {
+        customersData = response
+      } else if (response?.result && Array.isArray(response.result)) {
+        customersData = response.result
+      } else if (response?.data && Array.isArray(response.data)) {
+        customersData = response.data
+      } else if (response?.content && Array.isArray(response.content)) {
+        customersData = response.content
+      }
+      
       // Map customer data to include user info
       const customersWithUserInfo = await Promise.all(
-        data.map(async (customer) => {
-          const orders = await orderService.getOrdersByCustomer(customer.id)
-          const totalSpent = orders.reduce((sum, o) => sum + (o.totalPrice || 0), 0)
-          return {
-            id: customer.id,
-            name: customer.user?.fullName || 'N/A',
-            email: customer.user?.email || 'N/A',
-            phone: customer.user?.phone || 'N/A',
-            totalOrders: orders.length,
-            totalSpent,
-            joined: customer.user?.birthDay || 'N/A',
+        (customersData || []).map(async (customer) => {
+          if (!customer) return null
+          try {
+            const ordersResponse = await orderService.getOrdersByCustomer(customer.id)
+            const ordersList = Array.isArray(ordersResponse) ? ordersResponse : []
+            const totalSpent = ordersList.reduce((sum, o) => sum + (o?.totalPrice || 0), 0)
+            return {
+              id: customer.id,
+              name: customer.user?.fullName || 'N/A',
+              email: customer.user?.email || 'N/A',
+              phone: customer.user?.phone || 'N/A',
+              totalOrders: ordersList.length,
+              totalSpent,
+              joined: customer.user?.birthDay || 'N/A',
+            }
+          } catch (err) {
+            console.error('Error processing customer:', customer.id, err)
+            return {
+              id: customer.id,
+              name: customer.user?.fullName || 'N/A',
+              email: customer.user?.email || 'N/A',
+              phone: customer.user?.phone || 'N/A',
+              totalOrders: 0,
+              totalSpent: 0,
+              joined: customer.user?.birthDay || 'N/A',
+            }
           }
         })
       )
-      setCustomers(customersWithUserInfo)
+      setCustomers(customersWithUserInfo.filter(Boolean))
     } catch (error) {
       console.error('Error fetching customers:', error)
       setCustomers([])
@@ -40,20 +69,29 @@ export default function Customers() {
     }
   }
 
-  const filteredCustomers = customers.filter(
-    (c) =>
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.phone.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.id.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredCustomers = (customers || []).filter((c) => {
+    if (!c) return false
+    return (
+      c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.phone?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.id?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  })
 
-  const totalCustomers = customers.length
-  const totalOrders = customers.reduce((sum, c) => sum + c.totalOrders, 0)
-  const totalRevenue = customers.reduce((sum, c) => sum + c.totalSpent, 0)
+  const totalCustomers = (customers || []).length
+  const totalOrders = (customers || []).reduce((sum, c) => sum + (c?.totalOrders || 0), 0)
+  const totalRevenue = (customers || []).reduce((sum, c) => sum + (c?.totalSpent || 0), 0)
 
   if (loading) {
-    return <div className="text-center py-12">Loading...</div>
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading customers...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -76,7 +114,10 @@ export default function Customers() {
             View and manage customer information
           </p>
         </div>
-        <button className="px-4 py-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-medium shadow-md hover:shadow-lg flex items-center gap-2">
+        <button 
+          onClick={() => alert('Add New Customer form - Coming soon!')}
+          className="px-4 py-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-medium shadow-md hover:shadow-lg flex items-center gap-2 transition-shadow"
+        >
           <Plus className="w-4 h-4" />
           Add New Customer
         </button>

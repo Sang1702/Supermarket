@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useState, useRef, useEffect } from 'react'
 import {
   LayoutDashboard,
   Package,
@@ -10,7 +11,10 @@ import {
   ShoppingCart,
   ShoppingBag,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  User,
+  Settings,
+  LogOut
 } from 'lucide-react'
 
 const menuItems = [
@@ -26,6 +30,32 @@ const menuItems = [
 ]
 
 export default function Sidebar({ isOpen, onToggle }) {
+  const [showUserMenu, setShowUserMenu] = useState(false)
+  const userMenuRef = useRef(null)
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setShowUserMenu(false)
+      }
+    }
+
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showUserMenu])
+
+  const handleLogout = () => {
+    // Xóa token và redirect về trang login
+    localStorage.removeItem('token')
+    window.location.href = '/login'
+    setShowUserMenu(false)
+  }
+
   return (
     <aside
       className={`bg-gradient-to-br from-slate-900 to-slate-950 text-gray-200 transition-all duration-300 relative ${isOpen ? 'w-64' : 'w-20'
@@ -80,18 +110,57 @@ export default function Sidebar({ isOpen, onToggle }) {
       </nav>
 
       {/* User Profile */}
-      <div className="p-4 border-t border-gray-800">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center text-white font-semibold">
+      <div className="p-4 border-t border-gray-800 relative" ref={userMenuRef}>
+        <button
+          onClick={() => setShowUserMenu(!showUserMenu)}
+          className="w-full flex items-center gap-3 hover:bg-gray-800 rounded-lg p-2 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center text-white font-semibold flex-shrink-0">
             AD
           </div>
           {isOpen && (
-            <div>
+            <div className="flex-1 text-left">
               <div className="text-white text-sm font-medium">Admin User</div>
               <div className="text-gray-400 text-xs">Administrator</div>
             </div>
           )}
-        </div>
+        </button>
+
+        {/* Dropdown Menu */}
+        {showUserMenu && isOpen && (
+          <div className="absolute bottom-full left-4 right-4 mb-2 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
+            <button
+              onClick={() => {
+                setShowUserMenu(false)
+                // Navigate to profile page hoặc mở modal profile
+                alert('Profile page - Coming soon!')
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <User className="w-4 h-4" />
+              <span className="text-sm">My Profile</span>
+            </button>
+            <button
+              onClick={() => {
+                setShowUserMenu(false)
+                // Navigate to settings page hoặc mở modal settings
+                alert('Settings page - Coming soon!')
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <Settings className="w-4 h-4" />
+              <span className="text-sm">Settings</span>
+            </button>
+            <div className="border-t border-gray-200"></div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="text-sm">Logout</span>
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   )

@@ -6,32 +6,88 @@ export default function Suppliers() {
   const [suppliers, setSuppliers] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [error, setError] = useState(null)
 
   useEffect(() => {
+    console.log('Suppliers component mounted')
     fetchSuppliers()
   }, [])
 
   const fetchSuppliers = async () => {
     try {
-      const data = await supplierService.getSuppliers()
-      setSuppliers(data || [])
+      console.log('Fetching suppliers...')
+      const response = await supplierService.getSuppliers()
+      console.log('Suppliers response:', response)
+      
+      // Handle different response formats
+      let suppliersData = []
+      if (Array.isArray(response)) {
+        suppliersData = response
+      } else if (response?.result && Array.isArray(response.result)) {
+        suppliersData = response.result
+      } else if (response?.data && Array.isArray(response.data)) {
+        suppliersData = response.data
+      } else if (response?.content && Array.isArray(response.content)) {
+        suppliersData = response.content
+      }
+      
+      console.log('Suppliers data:', suppliersData)
+      setSuppliers(Array.isArray(suppliersData) ? suppliersData : [])
+      setError(null)
     } catch (error) {
       console.error('Error fetching suppliers:', error)
-      setSuppliers([])
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response,
+        stack: error.stack
+      })
+      setSuppliers([]) // keep state as array on error
+      setError(error.response?.data?.message || error.message || 'Failed to load suppliers. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
-  const filteredSuppliers = suppliers.filter(
-    (supplier) =>
+  const safeSuppliers = Array.isArray(suppliers) ? suppliers : []
+  const filteredSuppliers = safeSuppliers.filter((supplier) => {
+    if (!supplier) return false
+    return (
       supplier.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       supplier.representative?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       supplier.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+    )
+  })
 
   if (loading) {
-    return <div className="text-center py-12">Loading...</div>
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading suppliers...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-red-600 text-xl mb-2">⚠️ Error</div>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => {
+              setError(null)
+              setLoading(true)
+              fetchSuppliers()
+            }}
+            className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -54,7 +110,10 @@ export default function Suppliers() {
             Manage relationships with your suppliers
           </p>
         </div>
-        <button className="px-4 py-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-medium shadow-md hover:shadow-lg flex items-center gap-2">
+        <button 
+          onClick={() => alert('Add New Supplier form - Coming soon!')}
+          className="px-4 py-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-medium shadow-md hover:shadow-lg flex items-center gap-2 transition-shadow"
+        >
           <Plus className="w-4 h-4" />
           Add New Supplier
         </button>

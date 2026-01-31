@@ -109,7 +109,10 @@ export default function ImportSlips() {
             Track product imports from suppliers to warehouse
           </p>
         </div>
-        <button className="px-4 py-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-medium shadow-md hover:shadow-lg flex items-center gap-2">
+        <button 
+          onClick={() => alert('Create Import Slip form - Coming soon!')}
+          className="px-4 py-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-medium shadow-md hover:shadow-lg flex items-center gap-2 transition-shadow"
+        >
           <Plus className="w-4 h-4" />
           Create Import Slip
         </button>
